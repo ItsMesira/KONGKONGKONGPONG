@@ -1,5 +1,5 @@
 // handlers/modals.js — Modal submission handlers
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, MessageFlags } = require('discord.js');
 const { SHEETS, ADMIN_ROLE_ID } = require('../config');
 const { hashPassword, createSession } = require('../utils/auth');
 const { readSheet, appendRow, deleteRow } = require('../utils/sheets');
@@ -24,10 +24,10 @@ async function handleModalSubmit(interaction) {
 
     const users = await readSheet(SHEETS.USERS);
     if (users.find((u) => u.studentId === studentId)) {
-      return interaction.reply({ content: '❌ รหัสนักศึกษานี้ถูกลงทะเบียนแล้ว', ephemeral: true });
+      return interaction.reply({ content: '❌ รหัสนักศึกษานี้ถูกลงทะเบียนแล้ว', flags: MessageFlags.Ephemeral });
     }
     if (users.find((u) => u.discordId === user.id)) {
-      return interaction.reply({ content: '❌ Discord ของคุณได้ลงทะเบียนแล้ว', ephemeral: true });
+      return interaction.reply({ content: '❌ Discord ของคุณได้ลงทะเบียนแล้ว', flags: MessageFlags.Ephemeral });
     }
 
     const passwordHash = hashPassword(password);
@@ -41,7 +41,7 @@ async function handleModalSubmit(interaction) {
           .setDescription(`ยินดีต้อนรับ **${firstName} ${lastName}**!\nรหัสนักศึกษา: \`${studentId}\`\nกรุณาเข้าสู่ระบบเพื่อใช้งาน`)
           .setTimestamp(),
       ],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -53,13 +53,13 @@ async function handleModalSubmit(interaction) {
     const users = await readSheet(SHEETS.USERS);
     const found = users.find((u) => u.studentId === studentId);
     if (!found) {
-      return interaction.reply({ content: '❌ ไม่พบรหัสนักศึกษานี้ในระบบ', ephemeral: true });
+      return interaction.reply({ content: '❌ ไม่พบรหัสนักศึกษานี้ในระบบ', flags: MessageFlags.Ephemeral });
     }
     if (found.discordId !== user.id) {
-      return interaction.reply({ content: '❌ รหัสนักศึกษานี้ไม่ตรงกับบัญชี Discord ของคุณ', ephemeral: true });
+      return interaction.reply({ content: '❌ รหัสนักศึกษานี้ไม่ตรงกับบัญชี Discord ของคุณ', flags: MessageFlags.Ephemeral });
     }
     if (found.passwordHash !== hashPassword(password)) {
-      return interaction.reply({ content: '❌ รหัสผ่านไม่ถูกต้อง', ephemeral: true });
+      return interaction.reply({ content: '❌ รหัสผ่านไม่ถูกต้อง', flags: MessageFlags.Ephemeral });
     }
 
     createSession(user.id, studentId);
@@ -72,7 +72,7 @@ async function handleModalSubmit(interaction) {
           .setDescription(`ยินดีต้อนรับ **${found.firstName} ${found.lastName}**\nเซสชันจะหมดอายุใน 2 ชั่วโมง`)
           .setTimestamp(),
       ],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -88,7 +88,7 @@ async function handleModalSubmit(interaction) {
     // Validate date
     const parsedDate = new Date(dueDate.replace(' ', 'T'));
     if (isNaN(parsedDate.getTime())) {
-      return interaction.reply({ content: '❌ รูปแบบวันที่ไม่ถูกต้อง ใช้รูปแบบ YYYY-MM-DD HH:MM', ephemeral: true });
+      return interaction.reply({ content: '❌ รูปแบบวันที่ไม่ถูกต้อง ใช้รูปแบบ YYYY-MM-DD HH:MM', flags: MessageFlags.Ephemeral });
     }
 
     const homeworkId = generateId('HW');
@@ -124,13 +124,13 @@ async function handleModalSubmit(interaction) {
 
     if (imageUrl) embed.setImage(imageUrl);
 
-    return interaction.reply({ embeds: [embed], ephemeral: true });
+    return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
   }
 
   // ─── Admin: Add Subject ───────────────────────────────────────────────────
   if (customId === 'modal_add_subject') {
     if (!member.roles.cache.has(ADMIN_ROLE_ID)) {
-      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', ephemeral: true });
+      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', flags: MessageFlags.Ephemeral });
     }
 
     const subjectCode = interaction.fields.getTextInputValue('subjectCode').trim().toUpperCase();
@@ -140,7 +140,7 @@ async function handleModalSubmit(interaction) {
 
     const subjects = await readSheet(SHEETS.SUBJECTS);
     if (subjects.find((s) => s.subjectCode === subjectCode)) {
-      return interaction.reply({ content: '❌ รหัสวิชานี้มีอยู่แล้วในระบบ', ephemeral: true });
+      return interaction.reply({ content: '❌ รหัสวิชานี้มีอยู่แล้วในระบบ', flags: MessageFlags.Ephemeral });
     }
 
     await appendRow(SHEETS.SUBJECTS, [subjectCode, subjectName, credits, instructor]);
@@ -158,14 +158,14 @@ async function handleModalSubmit(interaction) {
           )
           .setTimestamp(),
       ],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
   // ─── Admin: Delete Homework ───────────────────────────────────────────────
   if (customId === 'modal_delete_homework') {
     if (!member.roles.cache.has(ADMIN_ROLE_ID)) {
-      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', ephemeral: true });
+      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', flags: MessageFlags.Ephemeral });
     }
 
     const homeworkId = interaction.fields.getTextInputValue('homeworkId').trim();
@@ -173,19 +173,19 @@ async function handleModalSubmit(interaction) {
     const rowIndex = homeworkList.findIndex((h) => h.homeworkId === homeworkId);
 
     if (rowIndex === -1) {
-      return interaction.reply({ content: `❌ ไม่พบการบ้าน ID: \`${homeworkId}\``, ephemeral: true });
+      return interaction.reply({ content: `❌ ไม่พบการบ้าน ID: \`${homeworkId}\``, flags: MessageFlags.Ephemeral });
     }
 
     // +2 because: +1 for header row, +1 for 1-based index
     await deleteRow(SHEETS.HOMEWORK, rowIndex + 2);
 
-    return interaction.reply({ content: `✅ ลบการบ้าน \`${homeworkId}\` เรียบร้อยแล้ว`, ephemeral: true });
+    return interaction.reply({ content: `✅ ลบการบ้าน \`${homeworkId}\` เรียบร้อยแล้ว`, flags: MessageFlags.Ephemeral });
   }
 
   // ─── Admin: Remove User ───────────────────────────────────────────────────
   if (customId === 'modal_remove_user') {
     if (!member.roles.cache.has(ADMIN_ROLE_ID)) {
-      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', ephemeral: true });
+      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', flags: MessageFlags.Ephemeral });
     }
 
     const studentId = interaction.fields.getTextInputValue('studentId').trim();
@@ -193,11 +193,11 @@ async function handleModalSubmit(interaction) {
     const rowIndex = users.findIndex((u) => u.studentId === studentId);
 
     if (rowIndex === -1) {
-      return interaction.reply({ content: `❌ ไม่พบผู้ใช้รหัส: \`${studentId}\``, ephemeral: true });
+      return interaction.reply({ content: `❌ ไม่พบผู้ใช้รหัส: \`${studentId}\``, flags: MessageFlags.Ephemeral });
     }
 
     await deleteRow(SHEETS.USERS, rowIndex + 2);
-    return interaction.reply({ content: `✅ ลบผู้ใช้รหัส \`${studentId}\` เรียบร้อยแล้ว`, ephemeral: true });
+    return interaction.reply({ content: `✅ ลบผู้ใช้รหัส \`${studentId}\` เรียบร้อยแล้ว`, flags: MessageFlags.Ephemeral });
   }
 }
 
