@@ -1,5 +1,5 @@
 // handlers/selects.js — Select menu interaction handlers
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { SHEETS } = require('../config');
 const { getSession } = require('../utils/auth');
 const { readSheet, appendRow } = require('../utils/sheets');
@@ -8,7 +8,10 @@ const { homeworkModal } = require('../modals');
 async function handleSelect(interaction) {
   const { customId, values, user } = interaction;
 
-  // ─── Subject selected for adding homework ─────────────────────────────────
+  // ─── Subject selected → show subject info embed + confirm button ──────────
+  // Discord does NOT allow reply() + showModal() in the same interaction.
+  // Fix: reply with subject info + a "Confirm & Fill Homework" button.
+  // The button interaction then shows the modal.
   if (customId === 'select_subject_for_hw') {
     const session = getSession(user.id);
     if (!session) {
@@ -23,7 +26,6 @@ async function handleSelect(interaction) {
       return interaction.reply({ content: '❌ ไม่พบวิชาที่เลือก', ephemeral: true });
     }
 
-    // Show subject info embed before the modal
     const embed = new EmbedBuilder()
       .setColor(0x6366f1)
       .setTitle(`📚 ข้อมูลวิชา — ${subject.subjectCode}`)
@@ -33,19 +35,16 @@ async function handleSelect(interaction) {
         { name: 'หน่วยกิต', value: subject.credits, inline: true },
         { name: 'อาจารย์ผู้สอน', value: subject.instructor, inline: false }
       )
-      .setFooter({ text: 'ข้อมูลนี้แสดงเพื่อยืนยันเท่านั้น' });
+      .setFooter({ text: 'ตรวจสอบข้อมูลให้ถูกต้องก่อนกด' });
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
-    // Slight delay so user sees the subject info before modal pops
-    setTimeout(() => {
-      interaction.followUp({
-        content: '📝 กรุณากรอกข้อมูลการบ้าน:',
-        ephemeral: true,
-      });
-    }, 300);
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId(`btn_open_hw_modal_${subjectCode}`)
+        .setLabel('✏️ กรอกข้อมูลการบ้าน')
+        .setStyle(ButtonStyle.Primary)
+    );
 
-    // Show homework modal
-    return interaction.showModal(homeworkModal(subjectCode));
+    return interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
   }
 
   // ─── Mark homework as complete ────────────────────────────────────────────
@@ -79,6 +78,34 @@ async function handleSelect(interaction) {
       ],
       ephemeral: true,
     });
+  }
+
+  // ─── Admin: subject action menu ───────────────────────────────────────────
+  if (customId === 'select_admin_subject_action') {
+    const { ADMIN_ROLE_ID } = require('../config');
+    if (!interaction.member.roles.cache.has(ADMIN_ROLE_ID)) {
+      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', ephemeral: true });
+    }
+    const { addSubjectModal, editSubjectModal } = require('../modals');
+    const action = values[0];
+    if (action === 'add_subject') return interaction.showModal(addSubjectModal());
+    if (action === 'delete_homework') return interaction.showModal(require('../modals').deleteHomeworkModal());
+    if (action === 'manage_users') {
+      const users = await readSheet(SHEETS.USERS);
+      if (users.length === 0) {
+        return interaction.reply({ content: '❌ ไม่มีผู้ใช้ในระบบ', ephemeral: true });
+      }
+      const embed = new EmbedBuilder()
+        .setColor(0xef4444)
+        .setTitle('👥 รายชื่อผู้ใช้ทั้งหมด')
+        .setDescription(
+          users.map((u) => `• **${u.firstName} ${u.lastName}** | รหัส: \`${u.studentId}\` | <@${u.discordId}>`).join('\n')
+        );
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('btn_remove_user').setLabel('🗑️ ลบผู้ใช้').setStyle(ButtonStyle.Danger)
+      );
+      return interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+    }
   }
 }
 
