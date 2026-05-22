@@ -15,6 +15,7 @@ const {
   addSubjectModal,
   deleteHomeworkModal,
   removeUserModal,
+  homeworkModal,
 } = require('../modals');
 
 function isAdmin(member) {
@@ -24,24 +25,24 @@ function isAdmin(member) {
 async function handleButton(interaction) {
   const { customId, member, user } = interaction;
 
-  // ─── Registration ────────────────────────────────────────────────────────
+  // ─── Registration ─────────────────────────────────────────────────────────
   if (customId === 'btn_register') {
     return interaction.showModal(registerModal());
   }
 
-  // ─── Login ───────────────────────────────────────────────────────────────
+  // ─── Login ────────────────────────────────────────────────────────────────
   if (customId === 'btn_login') {
     return interaction.showModal(loginModal());
   }
 
-  // ─── Logout ──────────────────────────────────────────────────────────────
+  // ─── Logout ───────────────────────────────────────────────────────────────
   if (customId === 'btn_logout') {
     const { destroySession } = require('../utils/auth');
     destroySession(user.id);
     return interaction.reply({ content: '🚪 ออกจากระบบเรียบร้อยแล้ว', ephemeral: true });
   }
 
-  // ─── Add Homework ─────────────────────────────────────────────────────────
+  // ─── Add Homework → show subject dropdown ────────────────────────────────
   if (customId === 'btn_add_homework') {
     const session = getSession(user.id);
     if (!session) {
@@ -53,7 +54,7 @@ async function handleButton(interaction) {
       return interaction.reply({ content: '❌ ยังไม่มีวิชาในระบบ กรุณาให้ Admin เพิ่มวิชาก่อน', ephemeral: true });
     }
 
-    const options = subjects.map((s) => ({
+    const options = subjects.slice(0, 25).map((s) => ({
       label: `${s.subjectCode} — ${s.subjectName}`,
       description: `${s.credits} หน่วยกิต | อ.${s.instructor}`,
       value: s.subjectCode,
@@ -62,11 +63,17 @@ async function handleButton(interaction) {
     const row = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId('select_subject_for_hw')
-        .setPlaceholder('เลือกวิชาที่ต้องการเพิ่มการบ้าน')
+        .setPlaceholder('📚 เลือกวิชา...')
         .addOptions(options)
     );
 
     return interaction.reply({ content: '📚 กรุณาเลือกวิชา:', components: [row], ephemeral: true });
+  }
+
+  // ─── Open homework modal (fired from confirm button after subject select) ─
+  if (customId.startsWith('btn_open_hw_modal_')) {
+    const subjectCode = customId.replace('btn_open_hw_modal_', '');
+    return interaction.showModal(homeworkModal(subjectCode));
   }
 
   // ─── View Homework ────────────────────────────────────────────────────────
@@ -85,13 +92,17 @@ async function handleButton(interaction) {
     const embed = new EmbedBuilder()
       .setColor(0x6366f1)
       .setTitle('📋 รายการการบ้านทั้งหมด')
-      .setFooter({ text: 'Emble Bot' })
+      .setFooter({ text: 'Emble Bot • แสดงสูงสุด 10 รายการ' })
       .setTimestamp();
 
     for (const hw of pending.slice(0, 10)) {
+      const parts = [`📅 กำหนดส่ง: **${hw.dueDate}**`];
+      if (hw.details) parts.push(`📋 ${hw.details}`);
+      if (hw.link) parts.push(`🔗 ${hw.link}`);
+      if (hw.imageUrl) parts.push(`🖼️ ${hw.imageUrl}`);
       embed.addFields({
-        name: `[${hw.homeworkId}] ${hw.title} (${hw.subjectCode})`,
-        value: `📅 กำหนดส่ง: ${hw.dueDate}\n📋 ${hw.details || '-'}\n${hw.link ? `🔗 ${hw.link}` : ''}`,
+        name: `[${hw.homeworkId}] ${hw.title} — ${hw.subjectCode}`,
+        value: parts.join('\n'),
         inline: false,
       });
     }
@@ -99,7 +110,7 @@ async function handleButton(interaction) {
     return interaction.reply({ embeds: [embed], ephemeral: true });
   }
 
-  // ─── Check Completion ─────────────────────────────────────────────────────
+  // ─── Check / Mark Completion ──────────────────────────────────────────────
   if (customId === 'btn_check_completion') {
     const session = getSession(user.id);
     if (!session) {
@@ -118,7 +129,7 @@ async function handleButton(interaction) {
       return interaction.reply({ content: '✅ ไม่มีการบ้านที่ค้างอยู่', ephemeral: true });
     }
 
-    const options = pending.map((hw) => {
+    const options = pending.slice(0, 25).map((hw) => {
       const done = completions.find(
         (c) => c.homeworkId === hw.homeworkId && c.studentId === session.studentId
       );
@@ -132,8 +143,8 @@ async function handleButton(interaction) {
     const row = new ActionRowBuilder().addComponents(
       new StringSelectMenuBuilder()
         .setCustomId('select_mark_complete')
-        .setPlaceholder('เลือกงานที่ส่งแล้ว')
-        .addOptions(options.slice(0, 25))
+        .setPlaceholder('เลือกงานที่ส่งแล้วเพื่อทำเครื่องหมาย')
+        .addOptions(options)
     );
 
     return interaction.reply({
@@ -143,74 +154,27 @@ async function handleButton(interaction) {
     });
   }
 
-  // ─── Admin: Add Subject ───────────────────────────────────────────────────
-  if (customId === 'btn_admin_subject') {
+  // ─── Admin panel (single dropdown menu) ───────────────────────────────────
+  if (customId === 'btn_admin_panel') {
     if (!isAdmin(member)) {
       return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์ใช้งานนี้', ephemeral: true });
     }
-    return interaction.showModal(addSubjectModal());
-  }
-
-  // ─── Admin: Delete Homework ───────────────────────────────────────────────
-  if (customId === 'btn_admin_delete_hw') {
-    if (!isAdmin(member)) {
-      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์ใช้งานนี้', ephemeral: true });
-    }
-
-    // Show list of homework then modal
-    const homeworkList = await readSheet(SHEETS.HOMEWORK);
-    if (homeworkList.length === 0) {
-      return interaction.reply({ content: '❌ ไม่มีการบ้านในระบบ', ephemeral: true });
-    }
-
-    const list = homeworkList
-      .map((hw) => `\`${hw.homeworkId}\` — **${hw.title}** (${hw.subjectCode}) | กำหนดส่ง: ${hw.dueDate}`)
-      .join('\n');
-
-    await interaction.reply({ content: `📋 **รายการการบ้าน:**\n${list}`, ephemeral: true });
-
-    // Follow up with modal trigger button
-    return; // Admin will use the modal after seeing the list
-  }
-
-  // ─── Admin: Delete Homework (confirm modal) ───────────────────────────────
-  if (customId === 'btn_confirm_delete_hw') {
-    if (!isAdmin(member)) {
-      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', ephemeral: true });
-    }
-    return interaction.showModal(deleteHomeworkModal());
-  }
-
-  // ─── Admin: Manage Users ──────────────────────────────────────────────────
-  if (customId === 'btn_admin_users') {
-    if (!isAdmin(member)) {
-      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์ใช้งานนี้', ephemeral: true });
-    }
-
-    const users = await readSheet(SHEETS.USERS);
-    if (users.length === 0) {
-      return interaction.reply({ content: '❌ ไม่มีผู้ใช้ในระบบ', ephemeral: true });
-    }
-
-    const embed = new EmbedBuilder()
-      .setColor(0xef4444)
-      .setTitle('👥 รายชื่อผู้ใช้ทั้งหมด')
-      .setDescription(
-        users.map((u) => `• **${u.firstName} ${u.lastName}** | รหัส: \`${u.studentId}\` | Discord: <@${u.discordId}>`).join('\n')
-      )
-      .setFooter({ text: 'Emble Bot Admin' });
 
     const row = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId('btn_remove_user')
-        .setLabel('🗑️ ลบผู้ใช้')
-        .setStyle(ButtonStyle.Danger)
+      new StringSelectMenuBuilder()
+        .setCustomId('select_admin_subject_action')
+        .setPlaceholder('⚙️ เลือกการดำเนินการ Admin...')
+        .addOptions([
+          { label: '➕ เพิ่มวิชาใหม่', description: 'เพิ่มวิชาเข้าสู่ระบบ', value: 'add_subject' },
+          { label: '🗑️ ลบการบ้าน', description: 'ลบการบ้านโดยใช้ Homework ID', value: 'delete_homework' },
+          { label: '👥 จัดการผู้ใช้', description: 'ดูรายชื่อและลบผู้ใช้', value: 'manage_users' },
+        ])
     );
 
-    return interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+    return interaction.reply({ content: '⚙️ **Admin Panel** — กรุณาเลือกการดำเนินการ:', components: [row], ephemeral: true });
   }
 
-  // ─── Admin: Remove User ───────────────────────────────────────────────────
+  // ─── Admin: Remove User (from user list embed) ────────────────────────────
   if (customId === 'btn_remove_user') {
     if (!isAdmin(member)) {
       return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', ephemeral: true });
