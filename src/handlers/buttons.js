@@ -1,5 +1,5 @@
 // handlers/buttons.js — All button interaction handlers
-const {
+const { MessageFlags,
   EmbedBuilder,
   ActionRowBuilder,
   StringSelectMenuBuilder,
@@ -17,6 +17,8 @@ const {
   removeUserModal,
   homeworkModal,
 } = require('../modals');
+
+const EPHEMERAL = { flags: MessageFlags.Ephemeral };
 
 function isAdmin(member) {
   return member.roles.cache.has(ADMIN_ROLE_ID);
@@ -39,19 +41,19 @@ async function handleButton(interaction) {
   if (customId === 'btn_logout') {
     const { destroySession } = require('../utils/auth');
     destroySession(user.id);
-    return interaction.reply({ content: '🚪 ออกจากระบบเรียบร้อยแล้ว', ephemeral: true });
+    return interaction.reply({ content: '🚪 ออกจากระบบเรียบร้อยแล้ว', flags: MessageFlags.Ephemeral });
   }
 
   // ─── Add Homework → show subject dropdown ────────────────────────────────
   if (customId === 'btn_add_homework') {
     const session = getSession(user.id);
     if (!session) {
-      return interaction.reply({ content: '❌ กรุณาเข้าสู่ระบบก่อนใช้งาน', ephemeral: true });
+      return interaction.reply({ content: '❌ กรุณาเข้าสู่ระบบก่อนใช้งาน', flags: MessageFlags.Ephemeral });
     }
 
     const subjects = await readSheet(SHEETS.SUBJECTS);
     if (subjects.length === 0) {
-      return interaction.reply({ content: '❌ ยังไม่มีวิชาในระบบ กรุณาให้ Admin เพิ่มวิชาก่อน', ephemeral: true });
+      return interaction.reply({ content: '❌ ยังไม่มีวิชาในระบบ กรุณาให้ Admin เพิ่มวิชาก่อน', flags: MessageFlags.Ephemeral });
     }
 
     const options = subjects.slice(0, 25).map((s) => ({
@@ -67,7 +69,7 @@ async function handleButton(interaction) {
         .addOptions(options)
     );
 
-    return interaction.reply({ content: '📚 กรุณาเลือกวิชา:', components: [row], ephemeral: true });
+    return interaction.reply({ content: '📚 กรุณาเลือกวิชา:', components: [row], flags: MessageFlags.Ephemeral });
   }
 
   // ─── Open homework modal (fired from confirm button after subject select) ─
@@ -86,7 +88,7 @@ async function handleButton(interaction) {
     });
 
     if (pending.length === 0) {
-      return interaction.reply({ content: '✅ ไม่มีการบ้านที่ค้างอยู่ในขณะนี้', ephemeral: true });
+      return interaction.reply({ content: '✅ ไม่มีการบ้านที่ค้างอยู่ในขณะนี้', flags: MessageFlags.Ephemeral });
     }
 
     const embed = new EmbedBuilder()
@@ -107,14 +109,14 @@ async function handleButton(interaction) {
       });
     }
 
-    return interaction.reply({ embeds: [embed], ephemeral: true });
+    return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
   }
 
   // ─── Check / Mark Completion ──────────────────────────────────────────────
   if (customId === 'btn_check_completion') {
     const session = getSession(user.id);
     if (!session) {
-      return interaction.reply({ content: '❌ กรุณาเข้าสู่ระบบก่อน', ephemeral: true });
+      return interaction.reply({ content: '❌ กรุณาเข้าสู่ระบบก่อน', flags: MessageFlags.Ephemeral });
     }
 
     const homeworkList = await readSheet(SHEETS.HOMEWORK);
@@ -126,7 +128,7 @@ async function handleButton(interaction) {
     });
 
     if (pending.length === 0) {
-      return interaction.reply({ content: '✅ ไม่มีการบ้านที่ค้างอยู่', ephemeral: true });
+      return interaction.reply({ content: '✅ ไม่มีการบ้านที่ค้างอยู่', flags: MessageFlags.Ephemeral });
     }
 
     const options = pending.slice(0, 25).map((hw) => {
@@ -150,14 +152,14 @@ async function handleButton(interaction) {
     return interaction.reply({
       content: '✅ เลือกการบ้านที่คุณส่งแล้ว:',
       components: [row],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
   // ─── Admin panel (single dropdown menu) ───────────────────────────────────
   if (customId === 'btn_admin_panel') {
     if (!isAdmin(member)) {
-      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์ใช้งานนี้', ephemeral: true });
+      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์ใช้งานนี้', flags: MessageFlags.Ephemeral });
     }
 
     const row = new ActionRowBuilder().addComponents(
@@ -171,13 +173,13 @@ async function handleButton(interaction) {
         ])
     );
 
-    return interaction.reply({ content: '⚙️ **Admin Panel** — กรุณาเลือกการดำเนินการ:', components: [row], ephemeral: true });
+    return interaction.reply({ content: '⚙️ **Admin Panel** — กรุณาเลือกการดำเนินการ:', components: [row], flags: MessageFlags.Ephemeral });
   }
 
   // ─── Admin: Remove User (from user list embed) ────────────────────────────
   if (customId === 'btn_remove_user') {
     if (!isAdmin(member)) {
-      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', ephemeral: true });
+      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', flags: MessageFlags.Ephemeral });
     }
     return interaction.showModal(removeUserModal());
   }
