@@ -1,49 +1,54 @@
 // utils/panel.js — Build and post the main homework panel embed
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
 
+// The class image URL from the provided Discord CDN link
+const PANEL_IMAGE = 'https://media.discordapp.net/attachments/1481129431211708467/1507323556030316624/content.png';
+
 function buildPanelComponents() {
+  // Row 1: Account actions
   const row1 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('btn_register')
-      .setLabel('📝 ลงทะเบียน')
+      .setLabel('ลงทะเบียน')
+      .setEmoji('📝')
       .setStyle(ButtonStyle.Primary),
     new ButtonBuilder()
       .setCustomId('btn_login')
-      .setLabel('🔑 เข้าสู่ระบบ')
+      .setLabel('เข้าสู่ระบบ')
+      .setEmoji('🔑')
       .setStyle(ButtonStyle.Success),
     new ButtonBuilder()
       .setCustomId('btn_logout')
-      .setLabel('🚪 ออกจากระบบ')
+      .setLabel('ออกจากระบบ')
+      .setEmoji('🚪')
       .setStyle(ButtonStyle.Secondary)
   );
 
+  // Row 2: Homework actions (dropdown-style via select menus triggered by buttons)
   const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('btn_add_homework')
-      .setLabel('➕ เพิ่มการบ้าน')
+      .setLabel('เพิ่มการบ้าน')
+      .setEmoji('➕')
       .setStyle(ButtonStyle.Primary),
     new ButtonBuilder()
       .setCustomId('btn_view_homework')
-      .setLabel('📋 ดูการบ้าน')
+      .setLabel('ดูการบ้าน')
+      .setEmoji('📋')
       .setStyle(ButtonStyle.Secondary),
     new ButtonBuilder()
       .setCustomId('btn_check_completion')
-      .setLabel('✅ ตรวจสอบงาน')
+      .setLabel('ตรวจสอบงาน')
+      .setEmoji('✅')
       .setStyle(ButtonStyle.Secondary)
   );
 
+  // Row 3: Single admin button → opens dropdown menu
   const row3 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
-      .setCustomId('btn_admin_subject')
-      .setLabel('⚙️ จัดการวิชา (Admin)')
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId('btn_admin_delete_hw')
-      .setLabel('🗑️ ลบการบ้าน (Admin)')
-      .setStyle(ButtonStyle.Danger),
-    new ButtonBuilder()
-      .setCustomId('btn_admin_users')
-      .setLabel('👥 จัดการผู้ใช้ (Admin)')
+      .setCustomId('btn_admin_panel')
+      .setLabel('Admin Panel')
+      .setEmoji('⚙️')
       .setStyle(ButtonStyle.Danger)
   );
 
@@ -52,18 +57,24 @@ function buildPanelComponents() {
 
 function buildPanelEmbed() {
   return new EmbedBuilder()
-    .setColor(0x6366f1)
-    .setTitle('📚 Emble — ระบบติดตามการบ้าน')
+    .setColor(0x5865f2)
+    .setTitle('📚  ระบบติดตามการบ้าน — ม.4/1')
     .setDescription(
-      '**ยินดีต้อนรับสู่ระบบจัดการการบ้าน**\n\n' +
-      '🔹 **ลงทะเบียน** — สร้างบัญชีของคุณ\n' +
-      '🔹 **เข้าสู่ระบบ** — ล็อกอินด้วยรหัสนักศึกษา\n' +
-      '🔹 **เพิ่มการบ้าน** — เพิ่มงานใหม่ (ต้องเข้าสู่ระบบ)\n' +
-      '🔹 **ดูการบ้าน** — ดูรายการงานทั้งหมด\n' +
-      '🔹 **ตรวจสอบงาน** — ทำเครื่องหมายงานที่เสร็จแล้ว\n\n' +
-      '⚙️ ปุ่มสีแดงสำหรับ Admin เท่านั้น'
+      '> ยินดีต้อนรับสู่ระบบจัดการการบ้านของห้อง\n\n' +
+      '**สำหรับนักเรียน**\n' +
+      '`📝` **ลงทะเบียน** — สร้างบัญชีครั้งแรก\n' +
+      '`🔑` **เข้าสู่ระบบ** — ล็อกอินก่อนใช้งาน\n' +
+      '`➕` **เพิ่มการบ้าน** — บันทึกงานใหม่\n' +
+      '`📋` **ดูการบ้าน** — ดูรายการงานทั้งหมด\n' +
+      '`✅` **ตรวจสอบงาน** — ทำเครื่องหมายงานที่เสร็จ\n\n' +
+      '**สำหรับ Admin**\n' +
+      '`⚙️` **Admin Panel** — จัดการวิชา / ลบงาน / จัดการผู้ใช้\n\n' +
+      '─────────────────────────────\n' +
+      '*ระบบจะแจ้งเตือนทาง DM เมื่อมีการบ้านใหม่\n' +
+      'และก่อนถึงกำหนดส่ง 1 วัน / 12 ชม. / 1 ชม.*'
     )
-    .setFooter({ text: 'Emble Bot • ระบบติดตามการบ้าน' })
+    .setImage(PANEL_IMAGE)
+    .setFooter({ text: 'Emble Bot • ระบบติดตามการบ้าน ม.4/1' })
     .setTimestamp();
 }
 
@@ -71,10 +82,10 @@ async function postOrUpdatePanel(channel) {
   const embed = buildPanelEmbed();
   const components = buildPanelComponents();
 
-  // Try to find existing panel message
-  const messages = await channel.messages.fetch({ limit: 20 });
+  // Try to find existing panel message and edit it
+  const messages = await channel.messages.fetch({ limit: 30 });
   const existing = messages.find(
-    (m) => m.author.bot && m.embeds.length > 0 && m.embeds[0].title?.includes('Emble')
+    (m) => m.author.bot && m.embeds.length > 0 && m.embeds[0].title?.includes('ระบบติดตามการบ้าน')
   );
 
   if (existing) {
