@@ -4,7 +4,6 @@ const {
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
-  // FIX #2: removed unused StringSelectMenuBuilder import
 } = require('discord.js');
 
 function registerModal() {
@@ -22,7 +21,12 @@ function registerModal() {
         new TextInputBuilder().setCustomId('studentId').setLabel('รหัสนักศึกษา').setStyle(TextInputStyle.Short).setRequired(true)
       ),
       new ActionRowBuilder().addComponents(
-        new TextInputBuilder().setCustomId('password').setLabel('รหัสผ่าน').setStyle(TextInputStyle.Short).setRequired(true).setMinLength(6)
+        new TextInputBuilder()
+          .setCustomId('password')
+          .setLabel('รหัสผ่าน (อย่างน้อย 6 ตัว)')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+          .setMinLength(6)
       )
     );
 }
@@ -81,7 +85,12 @@ function addSubjectModal() {
         new TextInputBuilder().setCustomId('subjectName').setLabel('ชื่อวิชา').setStyle(TextInputStyle.Short).setRequired(true)
       ),
       new ActionRowBuilder().addComponents(
-        new TextInputBuilder().setCustomId('credits').setLabel('หน่วยกิต').setStyle(TextInputStyle.Short).setRequired(true)
+        new TextInputBuilder()
+          .setCustomId('credits')
+          .setLabel('หน่วยกิต')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+          .setPlaceholder('เช่น 3')
       ),
       new ActionRowBuilder().addComponents(
         new TextInputBuilder().setCustomId('instructor').setLabel('ชื่ออาจารย์').setStyle(TextInputStyle.Short).setRequired(true)
