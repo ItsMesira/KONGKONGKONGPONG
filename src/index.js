@@ -5,6 +5,7 @@ const {
   GatewayIntentBits,
   Partials,
   Events,
+  MessageFlags,                          // FIX #1: import MessageFlags
 } = require('discord.js');
 
 const { TOKEN, PANEL_CHANNEL_ID } = require('./config');
@@ -30,16 +31,13 @@ client.once(Events.ClientReady, async () => {
   console.log(`✅ Emble Bot พร้อมใช้งาน! เข้าสู่ระบบในนาม: ${client.user.tag}`);
 
   try {
-    // Init Google Sheets structure
     await initSheets();
     console.log('✅ Google Sheets พร้อมใช้งาน');
 
-    // Pass client to modules that need it
     setClient(client);
     startScheduler(client);
     console.log('✅ ระบบแจ้งเตือนเปิดใช้งานแล้ว');
 
-    // Post/update main panel
     const channel = await client.channels.fetch(PANEL_CHANNEL_ID);
     if (channel) {
       await postOrUpdatePanel(channel);
@@ -64,7 +62,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
     }
   } catch (err) {
     console.error('❌ ข้อผิดพลาด interaction:', err);
-    const msg = { content: '❌ เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง', ephemeral: true };
+    // FIX #1: use MessageFlags instead of deprecated ephemeral:true
+    const msg = { content: '❌ เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง', flags: MessageFlags.Ephemeral };
     try {
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp(msg);
