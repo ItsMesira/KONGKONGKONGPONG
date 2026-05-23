@@ -4,7 +4,7 @@ const {
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
-  StringSelectMenuBuilder,
+  // FIX #2: removed unused StringSelectMenuBuilder import
 } = require('discord.js');
 
 function registerModal() {
@@ -59,7 +59,12 @@ function homeworkModal(subjectCode) {
         new TextInputBuilder().setCustomId('link').setLabel('ลิงก์ที่เกี่ยวข้อง').setStyle(TextInputStyle.Short).setRequired(false)
       ),
       new ActionRowBuilder().addComponents(
-        new TextInputBuilder().setCustomId('dueDate').setLabel('กำหนดส่ง (YYYY-MM-DD HH:MM)').setStyle(TextInputStyle.Short).setRequired(true).setPlaceholder('เช่น 2025-12-31 23:59')
+        new TextInputBuilder()
+          .setCustomId('dueDate')
+          .setLabel('กำหนดส่ง (YYYY-MM-DD HH:MM)')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+          .setPlaceholder('เช่น 2025-12-31 23:59')
       )
     );
 }
@@ -95,7 +100,7 @@ function deleteHomeworkModal() {
           .setLabel('Homework ID ที่ต้องการลบ')
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
-          .setPlaceholder('ดู ID จากรายการการบ้าน')
+          .setPlaceholder('ดู ID จากปุ่ม ดูการบ้าน')
       )
     );
 }
