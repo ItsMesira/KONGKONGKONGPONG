@@ -4,15 +4,15 @@ const { SHEETS, ADMIN_ROLE_ID } = require('../config');
 const { getSession } = require('../utils/auth');
 const { readSheet, appendRow } = require('../utils/sheets');
 
-// Helper: ephemeral flag (replaces deprecated ephemeral:true)
 const EPHEMERAL = { flags: MessageFlags.Ephemeral };
 
 async function handleSelect(interaction) {
   const { customId, values, user } = interaction;
 
-  // ─── Subject selected → reply with info embed + confirm button ───────────
-  // DO NOT call showModal() here — it would cause InteractionAlreadyReplied.
-  // The btn_open_hw_modal_ button (in buttons.js) handles opening the modal.
+  // ─── Subject selected → reply ONLY with subject info + confirm button ─────
+  // IMPORTANT: Do NOT call showModal() here — Discord only allows ONE response
+  // per interaction. The confirm button (btn_open_hw_modal_) opens the modal
+  // as a fresh interaction in buttons.js.
   if (customId === 'select_subject_for_hw') {
     const session = getSession(user.id);
     if (!session) {
@@ -31,9 +31,9 @@ async function handleSelect(interaction) {
       .setColor(0x6366f1)
       .setTitle(`📚 ข้อมูลวิชา — ${subject.subjectCode}`)
       .addFields(
-        { name: 'ชื่อวิชา',    value: subject.subjectName, inline: true },
-        { name: 'รหัสวิชา',    value: subject.subjectCode, inline: true },
-        { name: 'หน่วยกิต',    value: subject.credits,     inline: true },
+        { name: 'ชื่อวิชา',      value: subject.subjectName, inline: true },
+        { name: 'รหัสวิชา',      value: subject.subjectCode, inline: true },
+        { name: 'หน่วยกิต',      value: subject.credits,     inline: true },
         { name: 'อาจารย์ผู้สอน', value: subject.instructor,  inline: false }
       )
       .setFooter({ text: 'ตรวจสอบข้อมูลให้ถูกต้องก่อนกด' });
@@ -45,7 +45,6 @@ async function handleSelect(interaction) {
         .setStyle(ButtonStyle.Primary)
     );
 
-    // reply() only — no showModal() here
     return interaction.reply({ embeds: [embed], components: [row], ...EPHEMERAL });
   }
 
@@ -82,9 +81,7 @@ async function handleSelect(interaction) {
     });
   }
 
-  // ─── Admin dropdown menu ──────────────────────────────────────────────────
-  // add_subject and delete_homework → showModal() is safe here because
-  // this interaction has NOT been replied to yet.
+  // ─── Admin dropdown ───────────────────────────────────────────────────────
   if (customId === 'select_admin_subject_action') {
     if (!interaction.member.roles.cache.has(ADMIN_ROLE_ID)) {
       return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', ...EPHEMERAL });
@@ -93,17 +90,15 @@ async function handleSelect(interaction) {
     const { addSubjectModal, deleteHomeworkModal } = require('../modals');
     const action = values[0];
 
+    // showModal() is safe here — this is the first and only response
     if (action === 'add_subject') {
       return interaction.showModal(addSubjectModal());
     }
 
     if (action === 'delete_homework') {
-      // Show current homework list as context, then open delete modal
-      const homeworkList = await readSheet(SHEETS.HOMEWORK);
-      if (homeworkList.length === 0) {
-        return interaction.reply({ content: '❌ ไม่มีการบ้านในระบบ', ...EPHEMERAL });
-      }
-      // showModal() as the first and only response — no reply() before it
+      // FIX: removed readSheet() call before showModal() — async await before
+      // showModal() can cause interaction timeout (>3s = Discord rejects modal).
+      // Admin uses "ดูการบ้าน" button to find the ID first, then enters it here.
       return interaction.showModal(deleteHomeworkModal());
     }
 
