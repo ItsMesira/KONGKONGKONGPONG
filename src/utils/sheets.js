@@ -32,7 +32,7 @@ async function readSheet(tabName) {
   });
 }
 
-// Append a row to a sheet tab (values = array matching column order)
+// Append a row to a sheet tab
 async function appendRow(tabName, values) {
   const client = await getClient();
   await client.spreadsheets.values.append({
@@ -43,7 +43,7 @@ async function appendRow(tabName, values) {
   });
 }
 
-// Update a specific row by 1-based row index (rowIndex includes header, so data starts at 2)
+// Update a specific row by 1-based row index
 async function updateRow(tabName, rowIndex, values) {
   const client = await getClient();
   await client.spreadsheets.values.update({
@@ -57,28 +57,23 @@ async function updateRow(tabName, rowIndex, values) {
 // Delete a row by 1-based row index
 async function deleteRow(tabName, rowIndex) {
   const client = await getClient();
-  // Get sheet ID (gid) for the tab
   const meta = await client.spreadsheets.get({ spreadsheetId: SHEET_ID });
-  const sheet = meta.data.sheets.find(
-    (s) => s.properties.title === tabName
-  );
+  const sheet = meta.data.sheets.find((s) => s.properties.title === tabName);
   if (!sheet) throw new Error(`Sheet tab "${tabName}" not found`);
   const sheetId = sheet.properties.sheetId;
   await client.spreadsheets.batchUpdate({
     spreadsheetId: SHEET_ID,
     requestBody: {
-      requests: [
-        {
-          deleteDimension: {
-            range: {
-              sheetId,
-              dimension: 'ROWS',
-              startIndex: rowIndex - 1, // 0-based
-              endIndex: rowIndex,       // exclusive
-            },
+      requests: [{
+        deleteDimension: {
+          range: {
+            sheetId,
+            dimension: 'ROWS',
+            startIndex: rowIndex - 1, // 0-based
+            endIndex: rowIndex,       // exclusive
           },
         },
-      ],
+      }],
     },
   });
 }
@@ -96,12 +91,10 @@ async function initSheets() {
     [SHEETS.COMPLETION]: ['homeworkId', 'studentId', 'completedAt'],
   };
 
-  const addRequests = [];
-  for (const tab of Object.values(SHEETS)) {
-    if (!existingTabs.includes(tab)) {
-      addRequests.push({ addSheet: { properties: { title: tab } } });
-    }
-  }
+  // Create missing tabs in one batch request
+  const addRequests = Object.values(SHEETS)
+    .filter((tab) => !existingTabs.includes(tab))
+    .map((tab) => ({ addSheet: { properties: { title: tab } } }));
 
   if (addRequests.length > 0) {
     await client.spreadsheets.batchUpdate({
@@ -110,10 +103,9 @@ async function initSheets() {
     });
   }
 
-  // Write headers if tab was empty
+  // FIX #6: removed unused `const existing = await readSheet(tab)` call
+  // Only check the raw A1 header row — no wasted readSheet call
   for (const [tab, headers] of Object.entries(tabHeaders)) {
-    const existing = await readSheet(tab);
-    // Re-read raw to check if header row exists
     const raw = await client.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range: `${tab}!A1:Z1`,
