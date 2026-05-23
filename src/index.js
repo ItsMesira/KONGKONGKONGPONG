@@ -1,5 +1,15 @@
 // index.js — Emble Bot Entry Point
 require('dotenv').config();
+
+// ─── Keep-alive server (starts FIRST so Render detects the port immediately) ──
+const http = require('http');
+http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end('Bot is alive!');
+}).listen(process.env.PORT || 3000, () => {
+  console.log(`Keep-alive server running on port ${process.env.PORT || 3000}`);
+});
+
 const {
   Client,
   GatewayIntentBits,
@@ -35,7 +45,6 @@ client.once(Events.ClientReady, async () => {
     log('✅ Google Sheets พร้อมใช้งาน');
   } catch (err) {
     log('❌ ไม่สามารถเชื่อมต่อ Google Sheets:', err.message);
-    // Don't exit — bot can still handle interactions even if Sheets is temporarily down
   }
 
   setClient(client);
@@ -58,7 +67,7 @@ client.once(Events.ClientReady, async () => {
 // ─── Interactions ─────────────────────────────────────────────────────────────
 client.on(Events.InteractionCreate, async (interaction) => {
   try {
-    if      (interaction.isButton())          await handleButton(interaction);
+    if      (interaction.isButton())           await handleButton(interaction);
     else if (interaction.isStringSelectMenu()) await handleSelect(interaction);
     else if (interaction.isModalSubmit())      await handleModalSubmit(interaction);
   } catch (err) {
@@ -74,13 +83,12 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-// ─── Global error handlers (prevent crashes on unhandled rejections) ──────────
+// ─── Global error handlers ────────────────────────────────────────────────────
 process.on('unhandledRejection', (reason) => {
   log('⚠️ Unhandled rejection:', reason);
 });
 process.on('uncaughtException', (err) => {
   log('❌ Uncaught exception:', err);
-  // Give the logger a tick to flush before potentially exiting
   setTimeout(() => process.exit(1), 500);
 });
 
@@ -93,7 +101,7 @@ async function shutdown(signal) {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT',  () => shutdown('SIGINT'));
 
-// ─── Logger helper ─────────────────────────────────────────────────────────────
+// ─── Logger helper ────────────────────────────────────────────────────────────
 function log(...args) {
   console.log(`[${new Date().toISOString()}]`, ...args);
 }
