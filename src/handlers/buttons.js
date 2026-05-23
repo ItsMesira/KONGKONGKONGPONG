@@ -84,7 +84,7 @@ async function handleButton(interaction) {
     const now = Date.now();
     const pending = homeworkList.filter((hw) => {
       if (!hw.dueDate) return true;
-      return new Date(hw.dueDate).getTime() >= now;
+      return new Date(hw.dueDate.replace(' ', 'T')).getTime() >= now;
     });
 
     if (pending.length === 0) {
@@ -124,7 +124,7 @@ async function handleButton(interaction) {
     const now = Date.now();
     const pending = homeworkList.filter((hw) => {
       if (!hw.dueDate) return true;
-      return new Date(hw.dueDate).getTime() >= now;
+      return new Date(hw.dueDate.replace(' ', 'T')).getTime() >= now;
     });
 
     if (pending.length === 0) {
