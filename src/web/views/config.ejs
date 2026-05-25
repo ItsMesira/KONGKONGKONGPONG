@@ -1,0 +1,49 @@
+<%
+  const path = '/config';
+  const title = 'Config';
+  body = `
+<form id="configForm">
+  <table>
+    <thead><tr><th>Key</th><th>Value</th><th>Action</th></tr></thead>
+    <tbody id="configTable">
+      ${settings.map(s => `
+        <tr>
+          <td><code>${s.key}</code></td>
+          <td><input type="text" value="${(s.value || '').replace(/"/g, '&quot;')}" data-key="${s.key}" class="config-val" style="margin:0;width:100%"></td>
+          <td><button type="button" class="outline secondary" style="padding:4px 10px;font-size:0.8rem" onclick="saveSetting('${s.key}')">Save</button></td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+</form>
+
+<div style="display:flex;gap:8px;margin-top:var(--pico-spacing)">
+  <input type="text" id="newKey" placeholder="New key" style="width:200px">
+  <input type="text" id="newVal" placeholder="New value" style="width:300px">
+  <button onclick="addSetting()">Add</button>
+</div>
+
+<script>
+async function saveSetting(key) {
+  const input = document.querySelector(\`.config-val[data-key="\${key}"]\`);
+  const value = input.value;
+  const res = await fetch('/api/settings/' + key, {
+    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ value })
+  });
+  if (res.ok) alert('Saved!');
+  else { const d = await res.json(); alert('Error: ' + d.error); }
+}
+
+async function addSetting() {
+  const key = document.getElementById('newKey').value.trim();
+  const value = document.getElementById('newVal').value.trim();
+  if (!key) return alert('Enter a key');
+  const res = await fetch('/api/settings/' + key, {
+    method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ value })
+  });
+  if (res.ok) location.reload();
+  else { const d = await res.json(); alert('Error: ' + d.error); }
+}
+</script>
+`%>
+<%- include('layout', { user, path, title, body, error }) %>

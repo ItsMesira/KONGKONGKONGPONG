@@ -1,0 +1,77 @@
+<%
+  const path = '/polls';
+  const title = 'Polls';
+  body = `
+<button onclick="showCreateModal()">+ Create Poll</button>
+
+<table style="margin-top:var(--pico-spacing)">
+  <thead><tr><th>ID</th><th>Question</th><th>Channel</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+    ${polls.map(p => `
+      <tr>
+        <td class="truncate"><code>${p.pollId}</code></td>
+        <td>${p.question}</td>
+        <td>${p.channelId || '-'}</td>
+        <td><span class="badge ${p.active === 'true' ? 'badge-green' : 'badge-red'}">${p.active === 'true' ? 'Active' : 'Closed'}</span></td>
+        <td>
+          ${p.active === 'true' ? `<button class="outline secondary" style="padding:4px 10px;font-size:0.8rem" onclick="closePoll('${p.pollId}')">Close</button>` : ''}
+        </td>
+      </tr>
+    `).join('')}
+  </tbody>
+</table>
+
+<div id="pollModal" class="modal-overlay" style="display:none">
+  <div class="modal-content">
+    <h2>Create Poll</h2>
+    <label>Question <input type="text" id="pollQuestion" placeholder="What's your favorite subject?"></label>
+    <label>Channel
+      <select id="pollChannel">
+        ${channels.map(c => `<option value="${c.id}">#${c.name}</option>`).join('')}
+        ${channels.length === 0 ? '<option value="">No text channels found</option>' : ''}
+      </select>
+    </label>
+    <label>Options (one per line, max 5)
+      <textarea id="pollOptions" rows="4" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
+    </label>
+    <div style="display:flex;gap:8px;margin-top:var(--pico-spacing)">
+      <button onclick="createPoll()">Create</button>
+      <button class="secondary" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showCreateModal() {
+  document.getElementById('pollQuestion').value = '';
+  document.getElementById('pollOptions').value = '';
+  document.getElementById('pollModal').style.display = 'flex';
+}
+
+async function createPoll() {
+  const question = document.getElementById('pollQuestion').value.trim();
+  const options = document.getElementById('pollOptions').value.split('\\n').filter(s => s.trim()).map(s => s.trim());
+  const channelId = document.getElementById('pollChannel').value;
+  if (!question) return alert('Enter a question');
+  if (options.length < 2) return alert('Enter at least 2 options');
+  if (options.length > 5) return alert('Max 5 options');
+
+  const res = await fetch('/api/polls', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ question, options, channelId })
+  });
+  if (res.ok) { alert('Poll posted!'); location.reload(); }
+  else { const d = await res.json(); alert('Error: ' + d.error); }
+}
+
+async function closePoll(id) {
+  if (!confirm('Close this poll?')) return;
+  const res = await fetch('/api/polls/' + id + '/close', { method: 'POST' });
+  if (res.ok) location.reload();
+  else { const d = await res.json(); alert('Error: ' + d.error); }
+}
+
+function closeModal() { document.getElementById('pollModal').style.display = 'none'; }
+</script>
+`%>
+<%- include('../layout', { user, path, title, body, error }) %>

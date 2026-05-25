@@ -1,13 +1,13 @@
 // index.js — Emble Bot Entry Point
 require('dotenv').config();
 
-// ─── Keep-alive server (starts FIRST so Render detects the port immediately) ──
-const http = require('http');
-http.createServer((req, res) => {
-  res.writeHead(200);
-  res.end('Bot is alive!');
-}).listen(process.env.PORT || 3000, () => {
-  console.log(`Keep-alive server running on port ${process.env.PORT || 3000}`);
+const { WEBUI_PORT } = require('./config');
+
+// ─── Express Web Server (starts FIRST so Render detects the port immediately) ─
+const { app, setClient: setWebClient } = require('./web/server');
+
+const server = app.listen(WEBUI_PORT, () => {
+  log(`🌐 Web server running on port ${WEBUI_PORT}`);
 });
 
 const {
@@ -35,6 +35,9 @@ const client = new Client({
   ],
   partials: [Partials.Channel, Partials.Message],
 });
+
+// Share bot client with web server
+setWebClient(client);
 
 // ─── Ready ────────────────────────────────────────────────────────────────────
 client.once(Events.ClientReady, async () => {
@@ -95,6 +98,7 @@ process.on('uncaughtException', (err) => {
 // ─── Graceful shutdown ────────────────────────────────────────────────────────
 async function shutdown(signal) {
   log(`🛑 Received ${signal} — shutting down gracefully…`);
+  server.close();
   client.destroy();
   process.exit(0);
 }

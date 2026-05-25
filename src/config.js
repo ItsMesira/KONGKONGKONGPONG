@@ -32,6 +32,7 @@ module.exports = {
   // Discord
   TOKEN:            process.env.DISCORD_TOKEN,
   CLIENT_ID:        process.env.CLIENT_ID,
+  CLIENT_SECRET:    process.env.CLIENT_SECRET,
   GUILD_ID:         process.env.GUILD_ID,
   PANEL_CHANNEL_ID: process.env.PANEL_CHANNEL_ID || '1508323164839477248',
   SUMMARY_USER_ID:  process.env.SUMMARY_USER_ID  || '915089884979556433',
@@ -47,6 +48,9 @@ module.exports = {
     SUBJECTS:   'Subjects',
     HOMEWORK:   'Homework',
     COMPLETION: 'Completion',
+    SETTINGS:   'Settings',
+    POLLS:      'Polls',
+    LOGS:       'Logs',
   },
 
   // Session timeout in ms (2 hours)
@@ -55,4 +59,9 @@ module.exports = {
   // Reminder deduplication TTL in ms (25 hours — slightly over 1 day to survive
   // bot restarts without re-firing the same reminder)
   REMINDER_DEDUP_TTL: 25 * 60 * 60 * 1000,
+
+  // WebUI
+  SESSION_SECRET: process.env.SESSION_SECRET || 'emble-bot-secret-change-me',
+  WEBUI_PORT:     process.env.WEBUI_PORT || process.env.PORT || 3000,
+  BASE_URL:       process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`,
 };

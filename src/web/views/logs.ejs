@@ -1,0 +1,35 @@
+<%
+  const path = '/logs';
+  const title = 'Logs';
+  body = `
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--pico-spacing)">
+  <span><strong>${logs.length}</strong> entries</span>
+  <button class="outline secondary" onclick="clearLogs()">Clear All</button>
+</div>
+
+<table>
+  <thead><tr><th>Timestamp</th><th>Admin</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
+  <tbody>
+    ${logs.map(l => `
+      <tr>
+        <td class="truncate">${l.timestamp || ''}</td>
+        <td>${l.adminName || ''}</td>
+        <td><span class="badge badge-yellow">${l.action || ''}</span></td>
+        <td class="truncate">${l.target || ''}</td>
+        <td class="truncate">${l.details || ''}</td>
+      </tr>
+    `).join('')}
+    ${logs.length === 0 ? '<tr><td colspan="5" style="text-align:center">No entries</td></tr>' : ''}
+  </tbody>
+</table>
+
+<script>
+async function clearLogs() {
+  if (!confirm('Clear all logs?')) return;
+  const res = await fetch('/api/logs', { method: 'DELETE' });
+  if (res.ok) location.reload();
+  else alert('Error clearing logs');
+}
+</script>
+`%>
+<%- include('layout', { user, path, title, body, error }) %>

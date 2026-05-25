@@ -1,0 +1,21 @@
+<%
+  const path = '/attendance';
+  const title = 'Attendance';
+  body = `
+<p>Completion records by date (tracked when students mark homework as complete).</p>
+
+<table>
+  <thead><tr><th>Homework ID</th><th>Student ID</th><th>Completed At</th></tr></thead>
+  <tbody>
+    ${completions.slice(-100).reverse().map(c => `
+      <tr>
+        <td class="truncate"><code>${c.homeworkId}</code></td>
+        <td>${c.studentId || ''}</td>
+        <td>${c.completedAt || '-'}</td>
+      </tr>
+    `).join('')}
+  </tbody>
+</table>
+<p><small>Showing last 100 records.</small></p>
+`%>
+<%- include('../layout', { user, path, title, body, error }) %>

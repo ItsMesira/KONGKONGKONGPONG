@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emble Bot — Login</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    article { max-width: 400px; text-align: center; }
+    .error { color: var(--pico-del-color); margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <article>
+    <hgroup>
+      <h2>Emble Bot</h2>
+      <p>Admin Panel</p>
+    </hgroup>
+    <p style="margin:2rem 0">Login with your Discord account to manage the bot.</p>
+    <a href="/auth/discord" role="button" class="contrast">Login with Discord</a>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <p class="error">Access denied. You need the Admin role in the server.</p>
+    <% } %>
+  </article>
+</body>
+</html>

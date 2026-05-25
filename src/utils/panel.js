@@ -48,16 +48,7 @@ function buildPanelComponents() {
       .setStyle(ButtonStyle.Secondary)
   );
 
-  // Row 3: Admin
-  const row3 = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('btn_admin_panel')
-      .setLabel('Admin Panel')
-      .setEmoji('⚙️')
-      .setStyle(ButtonStyle.Danger)
-  );
-
-  return [row1, row2, row3];
+  return [row1, row2];
 }
 
 function buildPanelEmbed() {
@@ -73,8 +64,6 @@ function buildPanelEmbed() {
       '`📋` **ดูการบ้าน** — ดูรายการงานทั้งหมด\n' +
       '`✅` **ตรวจสอบงาน** — ทำเครื่องหมายงานที่เสร็จ\n' +
       '`📊` **สถิติของฉัน** — ดูความคืบหน้าส่วนตัว\n\n' +
-      '**สำหรับ Admin**\n' +
-      '`⚙️` **Admin Panel** — จัดการวิชา / ลบงาน / จัดการผู้ใช้\n\n' +
       '─────────────────────────────\n' +
       '*ระบบจะแจ้งเตือนทาง DM เมื่อมีการบ้านใหม่\n' +
       'และก่อนถึงกำหนดส่ง 1 วัน / 12 ชม. / 1 ชม.*'

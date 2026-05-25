@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emble Bot Admin</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <style>
+    :root { --pico-font-size: 90%; }
+    .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 220px; background: var(--pico-card-background-color); border-right: 1px solid var(--pico-muted-border-color); padding: var(--pico-spacing); overflow-y: auto; }
+    .sidebar hgroup { margin-bottom: var(--pico-spacing); }
+    .sidebar nav { display: flex; flex-direction: column; gap: 4px; }
+    .sidebar nav a { padding: 8px 12px; border-radius: 6px; color: var(--pico-color); text-decoration: none; }
+    .sidebar nav a:hover, .sidebar nav a.active { background: var(--pico-primary-background); color: var(--pico-primary-inverse); }
+    .main { margin-left: 220px; padding: var(--pico-spacing); }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--pico-spacing); padding-bottom: var(--pico-spacing); border-bottom: 1px solid var(--pico-muted-border-color); }
+    .topbar .user { display: flex; align-items: center; gap: 8px; }
+    .topbar .user img { width: 32px; height: 32px; border-radius: 50%; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--pico-spacing); margin-bottom: var(--pico-spacing); }
+    .stat-card { padding: var(--pico-spacing); background: var(--pico-card-background-color); border-radius: 8px; text-align: center; }
+    .stat-card h3 { margin: 0; font-size: 2rem; }
+    .stat-card p { margin: 0; color: var(--pico-muted-color); font-size: 0.85rem; }
+    .flash { padding: 8px 12px; border-radius: 6px; margin-bottom: var(--pico-spacing); }
+    .flash-error { background: var(--pico-del-color); color: white; }
+    .flash-success { background: var(--pico-ins-color); color: white; }
+    table { font-size: 0.9rem; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+    .badge-green { background: var(--pico-ins-color); color: white; }
+    .badge-red { background: var(--pico-del-color); color: white; }
+    .badge-yellow { background: #f59e0b; color: white; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background: var(--pico-card-background-color); padding: var(--pico-spacing); border-radius: 8px; min-width: 400px; max-width: 90vw; }
+    .modal-content h2 { margin-top: 0; }
+    .inline-flex { display: inline-flex; gap: 4px; align-items: center; }
+    .truncate { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <% if (typeof user !== 'undefined' && user) { %>
+  <aside class="sidebar">
+    <hgroup>
+      <h5>Emble Bot</h5>
+      <p>Admin Panel</p>
+    </hgroup>
+    <nav>
+      <a href="/" class="<%= path === '/' ? 'active' : '' %>">Dashboard</a>
+      <a href="/users" class="<%= path === '/users' ? 'active' : '' %>">Users</a>
+      <a href="/subjects" class="<%= path === '/subjects' ? 'active' : '' %>">Subjects</a>
+      <a href="/homework" class="<%= path === '/homework' ? 'active' : '' %>">Homework</a>
+      <a href="/grading" class="<%= path === '/grading' ? 'active' : '' %>">Grading</a>
+      <a href="/polls" class="<%= path === '/polls' ? 'active' : '' %>">Polls</a>
+      <a href="/attendance" class="<%= path === '/attendance' ? 'active' : '' %>">Attendance</a>
+      <a href="/config" class="<%= path === '/config' ? 'active' : '' %>">Config</a>
+      <a href="/logs" class="<%= path === '/logs' ? 'active' : '' %>">Logs</a>
+      <hr>
+      <a href="/logout">Logout</a>
+    </nav>
+  </aside>
+  <% } %>
+
+  <main class="main">
+    <% if (typeof user !== 'undefined' && user) { %>
+    <div class="topbar">
+      <h4 style="margin:0"><%= typeof title !== 'undefined' ? title : 'Dashboard' %></h4>
+      <div class="user">
+        <img src="<%= user.avatar %>" alt="">
+        <span><%= user.username %></span>
+        <a href="/logout" role="button" class="outline secondary" style="padding:4px 12px;font-size:0.8rem">Logout</a>
+      </div>
+    </div>
+    <% } %>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="flash flash-error"><%= error %></div>
+    <% } %>
+
+    <%- body %>
+  </main>
+</body>
+</html>

@@ -7,23 +7,16 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js');
-const { ADMIN_ROLE_ID, SHEETS } = require('../config');
+const { SHEETS } = require('../config');
 const { getSession } = require('../utils/auth');
 const { readSheet } = require('../utils/sheets');
 const {
   registerModal,
   loginModal,
-  addSubjectModal,
-  deleteHomeworkModal,
-  removeUserModal,
   homeworkModal,
 } = require('../modals');
 
 const EPHEMERAL = { flags: MessageFlags.Ephemeral };
-
-function isAdmin(member) {
-  return member.roles.cache.has(ADMIN_ROLE_ID);
-}
 
 async function handleButton(interaction) {
   const { customId, member, user } = interaction;
@@ -233,34 +226,7 @@ async function handleButton(interaction) {
     return interaction.editReply({ embeds: [embed], ...EPHEMERAL });
   }
 
-  // ─── Admin panel ──────────────────────────────────────────────────────────
-  if (customId === 'btn_admin_panel') {
-    if (!isAdmin(member)) {
-      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์ใช้งานนี้', ...EPHEMERAL });
-    }
 
-    const row = new ActionRowBuilder().addComponents(
-      new StringSelectMenuBuilder()
-        .setCustomId('select_admin_subject_action')
-        .setPlaceholder('⚙️ เลือกการดำเนินการ Admin...')
-        .addOptions([
-          { label: '➕ เพิ่มวิชาใหม่',  description: 'เพิ่มวิชาเข้าสู่ระบบ',                value: 'add_subject' },
-          { label: '🗑️ ลบการบ้าน',      description: 'ลบการบ้านโดยใช้ Homework ID',          value: 'delete_homework' },
-          { label: '👥 จัดการผู้ใช้',   description: 'ดูรายชื่อและลบผู้ใช้',                 value: 'manage_users' },
-          { label: '📋 ดูรายการวิชา',   description: 'แสดงวิชาทั้งหมดในระบบ',                value: 'list_subjects' },
-        ])
-    );
-
-    return interaction.reply({ content: '⚙️ **Admin Panel** — กรุณาเลือกการดำเนินการ:', components: [row], ...EPHEMERAL });
-  }
-
-  // ─── Admin: Remove User (from user list embed) ────────────────────────────
-  if (customId === 'btn_remove_user') {
-    if (!isAdmin(member)) {
-      return interaction.reply({ content: '❌ คุณไม่มีสิทธิ์', ...EPHEMERAL });
-    }
-    return interaction.showModal(removeUserModal());
-  }
 }
 
 module.exports = { handleButton };

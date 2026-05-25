@@ -1,0 +1,50 @@
+<%
+  const path = '/grading';
+  const title = 'Grading';
+  body = `
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--pico-spacing)">
+  <select id="filterHomework" onchange="filterTable()" style="width:auto;margin:0">
+    <option value="">All Homework</option>
+    ${homework.map(h => `<option value="${h.homeworkId}">[${h.subjectCode}] ${h.title}</option>`).join('')}
+  </select>
+  <span><strong>${completions.length}</strong> submissions</span>
+</div>
+
+<table id="gradeTable">
+  <thead><tr><th>Homework</th><th>Student</th><th>Completed At</th><th>Score</th><th>Action</th></tr></thead>
+  <tbody>
+    ${completions.map(c => {
+      const hw = homework.find(h => h.homeworkId === c.homeworkId);
+      const student = users.find(u => u.studentId === c.studentId);
+      return `
+      <tr data-hw="${c.homeworkId}">
+        <td class="truncate">${hw ? '['+hw.subjectCode+'] '+hw.title : c.homeworkId}</td>
+        <td>${student ? student.firstName+' '+student.lastName : c.studentId}</td>
+        <td>${c.completedAt || '-'}</td>
+        <td><input type="number" id="score_${c.homeworkId}_${c.studentId}" value="${c.score || ''}" min="0" max="100" style="width:80px;margin:0"></td>
+        <td><button class="outline secondary" style="padding:4px 10px;font-size:0.8rem" onclick="saveScore('${c.homeworkId}','${c.studentId}','${c.score || ''}')">Save</button></td>
+      </tr>`;
+    }).join('')}
+  </tbody>
+</table>
+
+<script>
+function filterTable() {
+  const val = document.getElementById('filterHomework').value;
+  document.querySelectorAll('#gradeTable tbody tr').forEach(r => {
+    r.style.display = !val || r.dataset.hw === val ? '' : 'none';
+  });
+}
+
+async function saveScore(homeworkId, studentId, currentScore) {
+  const score = document.getElementById('score_' + homeworkId + '_' + studentId).value;
+  const res = await fetch('/api/completions/' + homeworkId + '/score', {
+    method: 'PUT', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ score: score || '' })
+  });
+  if (res.ok) { alert('Score saved!'); }
+  else { const d = await res.json(); alert('Error: ' + d.error); }
+}
+</script>
+`%>
+<%- include('../layout', { user, path, title, body, error }) %>

@@ -1,0 +1,31 @@
+<%
+  const path = '/';
+  const title = 'Dashboard';
+  body = `
+<div class="stats-grid">
+  <div class="stat-card"><h3>${stats.totalUsers || 0}</h3><p>Total Users</p></div>
+  <div class="stat-card"><h3>${stats.totalSubjects || 0}</h3><p>Subjects</p></div>
+  <div class="stat-card"><h3>${stats.totalHomework || 0}</h3><p>Homework</p></div>
+  <div class="stat-card"><h3>${stats.totalCompletions || 0}</h3><p>Completions</p></div>
+</div>
+
+<details open>
+  <summary><strong>Recent Activity</strong></summary>
+  ${recentLogs && recentLogs.length > 0 ? `
+  <table>
+    <thead><tr><th>Time</th><th>Admin</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
+    <tbody>
+      ${recentLogs.map(l => `
+        <tr>
+          <td class="truncate">${l.timestamp || ''}</td>
+          <td>${l.adminName || ''}</td>
+          <td><span class="badge badge-yellow">${l.action || ''}</span></td>
+          <td class="truncate">${l.target || ''}</td>
+          <td class="truncate">${l.details || ''}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>` : '<p>No activity yet.</p>'}
+</details>
+`%>
+<%- include('layout', { user, path, title, body, error }) %>
