@@ -56,9 +56,10 @@ async function handleButton(interaction) {
       return interaction.reply({ content: '❌ กรุณาเข้าสู่ระบบก่อนใช้งาน', ...EPHEMERAL });
     }
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const subjects = await readSheet(SHEETS.SUBJECTS);
     if (subjects.length === 0) {
-      return interaction.reply({ content: '❌ ยังไม่มีวิชาในระบบ กรุณาให้ Admin เพิ่มวิชาก่อน', ...EPHEMERAL });
+      return interaction.editReply({ content: '❌ ยังไม่มีวิชาในระบบ กรุณาให้ Admin เพิ่มวิชาก่อน', ...EPHEMERAL });
     }
 
     const options = subjects.slice(0, 25).map((s) => ({
@@ -74,7 +75,7 @@ async function handleButton(interaction) {
         .addOptions(options)
     );
 
-    return interaction.reply({ content: '📚 กรุณาเลือกวิชา:', components: [row], ...EPHEMERAL });
+    return interaction.editReply({ content: '📚 กรุณาเลือกวิชา:', components: [row], ...EPHEMERAL });
   }
 
   // ─── Open homework modal (fired from confirm button after subject select) ─
@@ -85,6 +86,7 @@ async function handleButton(interaction) {
 
   // ─── View Homework ────────────────────────────────────────────────────────
   if (customId === 'btn_view_homework') {
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     // No session required — viewing is public so any classmate can check due dates
     const homeworkList = await readSheet(SHEETS.HOMEWORK);
     const now          = Date.now();
@@ -94,7 +96,7 @@ async function handleButton(interaction) {
     });
 
     if (pending.length === 0) {
-      return interaction.reply({ content: '✅ ไม่มีการบ้านที่ค้างอยู่ในขณะนี้', ...EPHEMERAL });
+      return interaction.editReply({ content: '✅ ไม่มีการบ้านที่ค้างอยู่ในขณะนี้', ...EPHEMERAL });
     }
 
     // Sort by due date ascending so nearest deadlines appear first
@@ -122,7 +124,7 @@ async function handleButton(interaction) {
       });
     }
 
-    return interaction.reply({ embeds: [embed], ...EPHEMERAL });
+    return interaction.editReply({ embeds: [embed], ...EPHEMERAL });
   }
 
   // ─── Check / Mark Completion ──────────────────────────────────────────────
@@ -132,6 +134,7 @@ async function handleButton(interaction) {
       return interaction.reply({ content: '❌ กรุณาเข้าสู่ระบบก่อน', ...EPHEMERAL });
     }
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const [homeworkList, completions] = await Promise.all([
       readSheet(SHEETS.HOMEWORK),
       readSheet(SHEETS.COMPLETION),
@@ -143,7 +146,7 @@ async function handleButton(interaction) {
     });
 
     if (pending.length === 0) {
-      return interaction.reply({ content: '✅ ไม่มีการบ้านที่ค้างอยู่', ...EPHEMERAL });
+      return interaction.editReply({ content: '✅ ไม่มีการบ้านที่ค้างอยู่', ...EPHEMERAL });
     }
 
     const options = pending.slice(0, 25).map((hw) => {
@@ -164,7 +167,7 @@ async function handleButton(interaction) {
         .addOptions(options)
     );
 
-    return interaction.reply({
+    return interaction.editReply({
       content:    '✅ เลือกการบ้านที่คุณส่งแล้ว:',
       components: [row],
       ...EPHEMERAL,
@@ -179,6 +182,7 @@ async function handleButton(interaction) {
       return interaction.reply({ content: '❌ กรุณาเข้าสู่ระบบก่อน', ...EPHEMERAL });
     }
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const [homeworkList, completions, users] = await Promise.all([
       readSheet(SHEETS.HOMEWORK),
       readSheet(SHEETS.COMPLETION),
@@ -226,7 +230,7 @@ async function handleButton(interaction) {
     }
 
     embed.setFooter({ text: 'Emble Bot • สถิติส่วนตัว' }).setTimestamp();
-    return interaction.reply({ embeds: [embed], ...EPHEMERAL });
+    return interaction.editReply({ embeds: [embed], ...EPHEMERAL });
   }
 
   // ─── Admin panel ──────────────────────────────────────────────────────────

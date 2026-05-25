@@ -31,18 +31,19 @@ async function handleModalSubmit(interaction) {
       return interaction.reply({ content: '❌ กรุณากรอกข้อมูลให้ครบถ้วน', flags: MessageFlags.Ephemeral });
     }
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const users = await readSheet(SHEETS.USERS);
     if (users.find((u) => u.studentId === studentId)) {
-      return interaction.reply({ content: '❌ รหัสนักศึกษานี้ถูกลงทะเบียนแล้ว', flags: MessageFlags.Ephemeral });
+      return interaction.editReply({ content: '❌ รหัสนักศึกษานี้ถูกลงทะเบียนแล้ว', flags: MessageFlags.Ephemeral });
     }
     if (users.find((u) => u.discordId === user.id)) {
-      return interaction.reply({ content: '❌ Discord ของคุณได้ลงทะเบียนแล้ว', flags: MessageFlags.Ephemeral });
+      return interaction.editReply({ content: '❌ Discord ของคุณได้ลงทะเบียนแล้ว', flags: MessageFlags.Ephemeral });
     }
 
     const passwordHash = hashPassword(password); // PBKDF2 + salt
     await appendRow(SHEETS.USERS, [user.id, firstName, lastName, studentId, passwordHash]);
 
-    return interaction.reply({
+    return interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setColor(0x22c55e)
@@ -59,22 +60,23 @@ async function handleModalSubmit(interaction) {
     const studentId = sanitise(interaction.fields.getTextInputValue('studentId'));
     const password  = interaction.fields.getTextInputValue('password');
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const users = await readSheet(SHEETS.USERS);
     const found = users.find((u) => u.studentId === studentId);
     if (!found) {
-      return interaction.reply({ content: '❌ ไม่พบรหัสนักศึกษานี้ในระบบ', flags: MessageFlags.Ephemeral });
+      return interaction.editReply({ content: '❌ ไม่พบรหัสนักศึกษานี้ในระบบ', flags: MessageFlags.Ephemeral });
     }
     if (found.discordId !== user.id) {
-      return interaction.reply({ content: '❌ รหัสนักศึกษานี้ไม่ตรงกับบัญชี Discord ของคุณ', flags: MessageFlags.Ephemeral });
+      return interaction.editReply({ content: '❌ รหัสนักศึกษานี้ไม่ตรงกับบัญชี Discord ของคุณ', flags: MessageFlags.Ephemeral });
     }
     // FIX: use verifyPassword() which handles both PBKDF2 and legacy SHA-256
     if (!verifyPassword(password, found.passwordHash)) {
-      return interaction.reply({ content: '❌ รหัสผ่านไม่ถูกต้อง', flags: MessageFlags.Ephemeral });
+      return interaction.editReply({ content: '❌ รหัสผ่านไม่ถูกต้อง', flags: MessageFlags.Ephemeral });
     }
 
     createSession(user.id, studentId);
 
-    return interaction.reply({
+    return interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setColor(0x22c55e)
@@ -110,6 +112,7 @@ async function handleModalSubmit(interaction) {
       return interaction.reply({ content: '❌ วันที่กำหนดส่งต้องอยู่ในอนาคต', flags: MessageFlags.Ephemeral });
     }
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const homeworkId = generateId('HW');
     const assignDate = new Date().toLocaleDateString('th-TH', {
       year: 'numeric', month: '2-digit', day: '2-digit',
@@ -144,7 +147,7 @@ async function handleModalSubmit(interaction) {
 
     if (imageUrl) embed.setImage(imageUrl);
 
-    return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
+    return interaction.editReply({ embeds: [embed], flags: MessageFlags.Ephemeral });
   }
 
   // ─── Admin: Add Subject ────────────────────────────────────────────────────
@@ -166,14 +169,15 @@ async function handleModalSubmit(interaction) {
       return interaction.reply({ content: '❌ หน่วยกิตต้องเป็นตัวเลขมากกว่า 0', flags: MessageFlags.Ephemeral });
     }
 
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const subjects = await readSheet(SHEETS.SUBJECTS);
     if (subjects.find((s) => s.subjectCode === subjectCode)) {
-      return interaction.reply({ content: '❌ รหัสวิชานี้มีอยู่แล้วในระบบ', flags: MessageFlags.Ephemeral });
+      return interaction.editReply({ content: '❌ รหัสวิชานี้มีอยู่แล้วในระบบ', flags: MessageFlags.Ephemeral });
     }
 
     await appendRow(SHEETS.SUBJECTS, [subjectCode, subjectName, credits, instructor]);
 
-    return interaction.reply({
+    return interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setColor(0x22c55e)
@@ -197,17 +201,18 @@ async function handleModalSubmit(interaction) {
     }
 
     const homeworkId   = sanitise(interaction.fields.getTextInputValue('homeworkId'));
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const homeworkList = await readSheet(SHEETS.HOMEWORK);
     const rowIndex     = homeworkList.findIndex((h) => h.homeworkId === homeworkId);
 
     if (rowIndex === -1) {
-      return interaction.reply({ content: `❌ ไม่พบการบ้าน ID: \`${homeworkId}\``, flags: MessageFlags.Ephemeral });
+      return interaction.editReply({ content: `❌ ไม่พบการบ้าน ID: \`${homeworkId}\``, flags: MessageFlags.Ephemeral });
     }
 
     // +2: +1 for header row, +1 for 0→1 index conversion
     await deleteRow(SHEETS.HOMEWORK, rowIndex + 2);
 
-    return interaction.reply({ content: `✅ ลบการบ้าน \`${homeworkId}\` เรียบร้อยแล้ว`, flags: MessageFlags.Ephemeral });
+    return interaction.editReply({ content: `✅ ลบการบ้าน \`${homeworkId}\` เรียบร้อยแล้ว`, flags: MessageFlags.Ephemeral });
   }
 
   // ─── Admin: Remove User ────────────────────────────────────────────────────
@@ -217,15 +222,16 @@ async function handleModalSubmit(interaction) {
     }
 
     const studentId = sanitise(interaction.fields.getTextInputValue('studentId'));
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const users     = await readSheet(SHEETS.USERS);
     const rowIndex  = users.findIndex((u) => u.studentId === studentId);
 
     if (rowIndex === -1) {
-      return interaction.reply({ content: `❌ ไม่พบผู้ใช้รหัส: \`${studentId}\``, flags: MessageFlags.Ephemeral });
+      return interaction.editReply({ content: `❌ ไม่พบผู้ใช้รหัส: \`${studentId}\``, flags: MessageFlags.Ephemeral });
     }
 
     await deleteRow(SHEETS.USERS, rowIndex + 2);
-    return interaction.reply({ content: `✅ ลบผู้ใช้รหัส \`${studentId}\` เรียบร้อยแล้ว`, flags: MessageFlags.Ephemeral });
+    return interaction.editReply({ content: `✅ ลบผู้ใช้รหัส \`${studentId}\` เรียบร้อยแล้ว`, flags: MessageFlags.Ephemeral });
   }
 }
 

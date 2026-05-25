@@ -29,11 +29,12 @@ async function handleSelect(interaction) {
     }
 
     const subjectCode = values[0];
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const subjects    = await readSheet(SHEETS.SUBJECTS);
     const subject     = subjects.find((s) => s.subjectCode === subjectCode);
 
     if (!subject) {
-      return interaction.reply({ content: '❌ ไม่พบวิชาที่เลือก', ...EPHEMERAL });
+      return interaction.editReply({ content: '❌ ไม่พบวิชาที่เลือก', ...EPHEMERAL });
     }
 
     const embed = new EmbedBuilder()
@@ -54,7 +55,7 @@ async function handleSelect(interaction) {
         .setStyle(ButtonStyle.Primary)
     );
 
-    return interaction.reply({ embeds: [embed], components: [row], ...EPHEMERAL });
+    return interaction.editReply({ embeds: [embed], components: [row], ...EPHEMERAL });
   }
 
   // ─── Mark homework as complete ─────────────────────────────────────────────
@@ -65,20 +66,21 @@ async function handleSelect(interaction) {
     }
 
     const homeworkId  = values[0];
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
     const completions = await readSheet(SHEETS.COMPLETION);
     const alreadyDone = completions.find(
       (c) => c.homeworkId === homeworkId && c.studentId === session.studentId
     );
 
     if (alreadyDone) {
-      return interaction.reply({ content: '✅ คุณได้ทำเครื่องหมายงานนี้ว่าเสร็จแล้ว', ...EPHEMERAL });
+      return interaction.editReply({ content: '✅ คุณได้ทำเครื่องหมายงานนี้ว่าเสร็จแล้ว', ...EPHEMERAL });
     }
 
     const now = new Date().toISOString();
     await appendRow(SHEETS.COMPLETION, [homeworkId, session.studentId, now]);
 
     const hw = (await readSheet(SHEETS.HOMEWORK)).find((h) => h.homeworkId === homeworkId);
-    return interaction.reply({
+    return interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setColor(0x22c55e)
@@ -109,9 +111,10 @@ async function handleSelect(interaction) {
     }
 
     if (action === 'manage_users') {
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       const users = await readSheet(SHEETS.USERS);
       if (users.length === 0) {
-        return interaction.reply({ content: '❌ ไม่มีผู้ใช้ในระบบ', ...EPHEMERAL });
+        return interaction.editReply({ content: '❌ ไม่มีผู้ใช้ในระบบ', ...EPHEMERAL });
       }
 
       // FIX: chunk user list to stay within Discord's 4096-char embed description limit
@@ -136,7 +139,7 @@ async function handleSelect(interaction) {
           .setStyle(ButtonStyle.Danger)
       );
 
-      return interaction.reply({
+      return interaction.editReply({
         embeds:     embeds.slice(0, 10), // Discord max 10 embeds per message
         components: [row],
         ...EPHEMERAL,
@@ -145,9 +148,10 @@ async function handleSelect(interaction) {
 
     // NEW: list all subjects
     if (action === 'list_subjects') {
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       const subjects = await readSheet(SHEETS.SUBJECTS);
       if (subjects.length === 0) {
-        return interaction.reply({ content: '❌ ยังไม่มีวิชาในระบบ', ...EPHEMERAL });
+        return interaction.editReply({ content: '❌ ยังไม่มีวิชาในระบบ', ...EPHEMERAL });
       }
       const embed = new EmbedBuilder()
         .setColor(0x6366f1)
@@ -159,7 +163,7 @@ async function handleSelect(interaction) {
             .slice(0, EMBED_DESC_LIMIT)
         )
         .setFooter({ text: `ทั้งหมด ${subjects.length} วิชา` });
-      return interaction.reply({ embeds: [embed], ...EPHEMERAL });
+      return interaction.editReply({ embeds: [embed], ...EPHEMERAL });
     }
   }
 }
