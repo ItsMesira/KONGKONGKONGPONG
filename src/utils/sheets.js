@@ -18,9 +18,8 @@ async function getClient() {
   const now = Date.now();
   if (sheetsClient && now - clientCreatedAt < CLIENT_TTL) return sheetsClient;
 
-  const creds = JSON.parse(GOOGLE_CREDENTIALS);
   const auth  = new google.auth.GoogleAuth({
-    credentials: creds,
+    credentials: GOOGLE_CREDENTIALS,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
   sheetsClient    = google.sheets({ version: 'v4', auth });

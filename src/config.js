@@ -3,28 +3,30 @@ require('dotenv').config();
 
 // ─── Startup env validation ────────────────────────────────────────────────
 // Fail fast with a clear message rather than cryptic errors at runtime.
-const REQUIRED_ENV = [
-  'DISCORD_TOKEN',
-  'CLIENT_ID',
-  'GUILD_ID',
-  'GOOGLE_SHEET_ID',
-  'GOOGLE_CREDENTIALS',
-];
-
-const missing = REQUIRED_ENV.filter((key) => !process.env[key]);
-if (missing.length > 0) {
-  console.error(
-    `❌ ตัวแปรสภาพแวดล้อมที่จำเป็นหายไป: ${missing.join(', ')}\n` +
-    '   คัดลอก .env.example เป็น .env แล้วกรอกค่าให้ครบ'
-  );
-  process.exit(1);
+// Resolve Google credentials — try file path first, then inline JSON
+function resolveCredentials() {
+  if (process.env.GOOGLE_CREDENTIALS_FILE) {
+    const fs = require('fs');
+    const path = require('path');
+    const credPath = path.resolve(process.env.GOOGLE_CREDENTIALS_FILE);
+    if (fs.existsSync(credPath)) {
+      const raw = fs.readFileSync(credPath, 'utf-8');
+      try { return JSON.parse(raw); } catch { /* fall through */ }
+    }
+  }
+  if (process.env.GOOGLE_CREDENTIALS) {
+    try { return JSON.parse(process.env.GOOGLE_CREDENTIALS); } catch { /* fall through */ }
+  }
+  return null;
 }
 
-// Validate that GOOGLE_CREDENTIALS is parseable JSON early
-try {
-  JSON.parse(process.env.GOOGLE_CREDENTIALS);
-} catch {
-  console.error('❌ GOOGLE_CREDENTIALS ไม่ใช่ JSON ที่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
+const resolvedCreds = resolveCredentials();
+if (!resolvedCreds) {
+  console.error(
+    '❌ ไม่พบ Google credentials\n' +
+    '   ใส่ GOOGLE_CREDENTIALS_FILE=google-credentials.json ใน .env\n' +
+    '   หรือใส่ GOOGLE_CREDENTIALS (JSON inline)'
+  );
   process.exit(1);
 }
 
@@ -40,7 +42,7 @@ module.exports = {
 
   // Google Sheets
   SHEET_ID:           process.env.GOOGLE_SHEET_ID,
-  GOOGLE_CREDENTIALS: process.env.GOOGLE_CREDENTIALS,
+  GOOGLE_CREDENTIALS: resolvedCreds,
 
   // Sheet tab names
   SHEETS: {
