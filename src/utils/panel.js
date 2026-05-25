@@ -63,7 +63,7 @@ function buildPanelComponents() {
 function buildPanelEmbed() {
   return new EmbedBuilder()
     .setColor(0x5865f2)
-    .setTitle('📚  ระบบติดตามการบ้าน — ม.4/1')
+    .setTitle('📚  ระบบติดตามการบ้าน — MEP4')
     .setDescription(
       '> ยินดีต้อนรับสู่ระบบจัดการการบ้านของห้อง\n\n' +
       '**สำหรับนักเรียน**\n' +
@@ -80,7 +80,7 @@ function buildPanelEmbed() {
       'และก่อนถึงกำหนดส่ง 1 วัน / 12 ชม. / 1 ชม.*'
     )
     .setImage(PANEL_IMAGE)
-    .setFooter({ text: 'Emble Bot • ระบบติดตามการบ้าน ม.4/1' })
+    .setFooter({ text: 'Emble Bot • ระบบติดตามการบ้าน MEP4' })
     .setTimestamp();
 }
 

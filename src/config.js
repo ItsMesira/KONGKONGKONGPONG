@@ -33,9 +33,9 @@ module.exports = {
   TOKEN:            process.env.DISCORD_TOKEN,
   CLIENT_ID:        process.env.CLIENT_ID,
   GUILD_ID:         process.env.GUILD_ID,
-  PANEL_CHANNEL_ID: process.env.PANEL_CHANNEL_ID || '1506267894068285542',
-  SUMMARY_USER_ID:  process.env.SUMMARY_USER_ID  || '918320537443385396',
-  ADMIN_ROLE_ID:    process.env.ADMIN_ROLE_ID     || '1480919691982667826',
+  PANEL_CHANNEL_ID: process.env.PANEL_CHANNEL_ID || '1508323164839477248',
+  SUMMARY_USER_ID:  process.env.SUMMARY_USER_ID  || '915089884979556433',
+  ADMIN_ROLE_ID:    process.env.ADMIN_ROLE_ID     || '1508338553606897724',
 
   // Google Sheets
   SHEET_ID:           process.env.GOOGLE_SHEET_ID,
